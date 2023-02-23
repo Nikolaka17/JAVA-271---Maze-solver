@@ -4,7 +4,7 @@
 // Last Modified    : 03/21/2018
 // Description      : This is the MazeLoader file for Math 271 where students
 //                    will implement the recursive routine to "solve" the maze.
-//package mazesol;
+//package mazesolver;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -71,7 +71,7 @@ public class MazeLoader {
         // of grid squares to use. Open the file and read in the size.
         try {
             
-            fileToRead = new Scanner(new File("C:/Users/Nikolas/Documents/code/Math 271/maze.txt"));
+            fileToRead = new Scanner(new File("maze.txt"));
             ROW = fileToRead.nextInt();
             COL = fileToRead.nextInt();
         }
@@ -158,6 +158,12 @@ public class MazeLoader {
                     JOptionPane.showMessageDialog(window,"Cannot exit maze.");
                 else{
                     JOptionPane.showMessageDialog(window, "Maze Exited!");
+                    for(int i = 0; i < path.length; i++){
+                        for(int j = 0; j < path[i].length; j++){
+                            System.out.print((path[i][j] == -1)? '#':'*');
+                        }
+                        System.out.println();
+                    }
                 }
                     
             }
@@ -189,13 +195,15 @@ public class MazeLoader {
             for(int j = 0; j < path[i].length; j++){
                 path[i][j] = -1;
                 visited[i][j] = false;
+                //grid[i][j].setBackground(OPEN_COLOR);
             }
         }
         
-        path[(int)p.getY()][(int)p.getX()] = 0;
-        visited[(int)p.getY()][(int)p.getX()] = true;
+        path[(int)p.getX()][(int)p.getY()] = 0;
+        visited[(int)p.getX()][(int)p.getY()] = true;
+        grid[(int)p.getX()][(int)p.getY()].setBackground(PATH_COLOR);
 
-        if(findPathR((int)p.getX(), (int)p.getY(), 1)){
+        if(findPathR((int)p.getY(), (int)p.getX(), 1)){
 
 
             return true;
@@ -205,7 +213,7 @@ public class MazeLoader {
     }
 
     public boolean findPathR(int x, int y, int count){
-        if(x == 0 || x == ROW - 1 || y == 0 || y == COL - 1){
+        if(x == 0 || x == COL - 1 || y == 0 || y == ROW - 1){
             return true;
         }
         if(grid[y][x + 1].getBackground() == OPEN_COLOR && !visited[y][x + 1]){
