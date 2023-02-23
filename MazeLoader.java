@@ -4,7 +4,7 @@
 // Last Modified    : 03/21/2018
 // Description      : This is the MazeLoader file for Math 271 where students
 //                    will implement the recursive routine to "solve" the maze.
-//package mazesolver;
+package mazesolver;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -16,6 +16,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -53,6 +54,10 @@ public class MazeLoader {
     
     private int[][] path;
     private boolean[][] visited;
+    private int iter = 0;
+    private ArrayList<Point> moves = new ArrayList<Point>();
+    private int numMoves = 0;
+    private ArrayList<Color> colors = new ArrayList<Color>();
     
     /** Default constructor - initializes all private values
      * 
@@ -183,6 +188,7 @@ public class MazeLoader {
      * @return whether or not a solution has been found.
      */
     public boolean findPath(Point p)  {
+        moves.clear();
         path = new int[ROW][COL];
         visited = new boolean[ROW][COL];
         for(int i = 0; i < path.length; i++){
@@ -199,9 +205,10 @@ public class MazeLoader {
         path[(int)p.getX()][(int)p.getY()] = 0;
         visited[(int)p.getX()][(int)p.getY()] = true;
         grid[(int)p.getX()][(int)p.getY()].setBackground(PATH_COLOR);
+        moves.add(p);
+        colors.add(PATH_COLOR);
 
         if(findPathR((int)p.getY(), (int)p.getX(), 1)){
-
 
             return true;
         }
@@ -210,48 +217,49 @@ public class MazeLoader {
     }
 
     public boolean findPathR(int x, int y, int count){
+        numMoves = count;
         if(x == 0 || x == COL - 1 || y == 0 || y == ROW - 1){
             return true;
         }
         if(grid[y][x + 1].getBackground() == OPEN_COLOR && !visited[y][x + 1]){
             path[y][x + 1] = count;
-            grid[y][x + 1].setBackground(PATH_COLOR);
+            //grid[y][x + 1].setBackground(PATH_COLOR);
             visited[y][x + 1] = true;
             if(findPathR(x + 1, y, count + 1)){
                 return true;
             }
             path[y][x + 1] = -1;
-            grid[y][x + 1].setBackground(OPEN_COLOR);
+            //grid[y][x + 1].setBackground(OPEN_COLOR);
         }
         if(grid[y - 1][x].getBackground() == OPEN_COLOR && !visited[y - 1][x]){
             path[y-1][x] = count;
-            grid[y-1][x].setBackground(PATH_COLOR);
+            //grid[y-1][x].setBackground(PATH_COLOR);
             visited[y-1][x] = true;
             if(findPathR(x, y-1, count+1)){
                 return true;
             }
             path[y-1][x] = -1;
-            grid[y-1][x].setBackground(OPEN_COLOR);
+            //grid[y-1][x].setBackground(OPEN_COLOR);
         }
         if(grid[y][x-1].getBackground() == OPEN_COLOR && !visited[y][x-1]){
             path[y][x-1] = count;
-            grid[y][x-1].setBackground(PATH_COLOR);
+            //grid[y][x-1].setBackground(PATH_COLOR);
             visited[y][x-1] = true;
             if(findPathR(x-1, y, count+1)){
                 return true;
             }
             path[y][x-1] = -1;
-            grid[y][x - 1].setBackground(OPEN_COLOR);
+            //grid[y][x - 1].setBackground(OPEN_COLOR);
         }
         if(grid[y+1][x].getBackground() == OPEN_COLOR && !visited[y+1][x]){
             path[y+1][x] = count;
-            grid[y+1][x].setBackground(PATH_COLOR);
+            //grid[y+1][x].setBackground(PATH_COLOR);
             visited[y+1][x] = true;
             if(findPathR(x, y+1, count+1)){
                 return true;
             }
             path[y+1][x] = -1;
-            grid[y+1][x].setBackground(OPEN_COLOR);
+            //grid[y+1][x].setBackground(OPEN_COLOR);
         }
         return false;
     }
@@ -301,7 +309,8 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
+            grid[(int)moves.get(iter).getX()][(int)moves.get(iter).getY()].setBackground(PATH_COLOR);
+            iter++;
         }
     }
 }
