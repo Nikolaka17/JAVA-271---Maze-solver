@@ -147,7 +147,7 @@ public class MazeLoader {
          */
         @Override
         public void mousePressed(MouseEvent e) {
-            if(((JPanel)e.getSource()).getBackground().equals(OPEN_COLOR) &&
+            if(!((JPanel)e.getSource()).getBackground().equals(WALL_COLOR) &&
                     !timer.isRunning()) {
                 data = ((JPanel)e.getSource()).getName();
                 start.x = Integer.parseInt(data.substring(0,data.indexOf(":")));
@@ -158,12 +158,6 @@ public class MazeLoader {
                     JOptionPane.showMessageDialog(window,"Cannot exit maze.");
                 else{
                     JOptionPane.showMessageDialog(window, "Maze Exited!");
-                    for(int i = 0; i < path.length; i++){
-                        for(int j = 0; j < path[i].length; j++){
-                            System.out.print((path[i][j] == -1)? '#':'*');
-                        }
-                        System.out.println();
-                    }
                 }
                     
             }
@@ -195,7 +189,10 @@ public class MazeLoader {
             for(int j = 0; j < path[i].length; j++){
                 path[i][j] = -1;
                 visited[i][j] = false;
-                //grid[i][j].setBackground(OPEN_COLOR);
+                if(grid[i][j].getBackground() == PATH_COLOR){
+                    grid[i][j].setBackground(OPEN_COLOR);
+                }
+                
             }
         }
         
