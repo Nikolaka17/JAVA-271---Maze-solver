@@ -218,7 +218,7 @@ public class MazeLoader {
         if(x == 0 || x == COL - 1 || y == 0 || y == ROW - 1){
             return true;
         }
-        if(grid[y][x + 1].getBackground() == OPEN_COLOR && !visited[y][x + 1]){
+        if(grid[y][x + 1].getBackground().equals(OPEN_COLOR) && !visited[y][x + 1]){
             visited[y][x + 1] = true;
             moves.add(new Point(y, x + 1));
             colors.add(PATH_COLOR);
@@ -229,7 +229,7 @@ public class MazeLoader {
             }
             colors.set(curPos, BAD_PATH_COLOR);
         }
-        if(grid[y - 1][x].getBackground() == OPEN_COLOR && !visited[y - 1][x]){
+        if(grid[y - 1][x].getBackground().equals(OPEN_COLOR) && !visited[y - 1][x]){
             visited[y-1][x] = true;
             moves.add(new Point(y - 1, x));
             colors.add(PATH_COLOR);
@@ -240,7 +240,7 @@ public class MazeLoader {
             }
             colors.set(curPos, BAD_PATH_COLOR);
         }
-        if(grid[y][x-1].getBackground() == OPEN_COLOR && !visited[y][x-1]){
+        if(grid[y][x-1].getBackground().equals(OPEN_COLOR) && !visited[y][x-1]){
             visited[y][x-1] = true;
             moves.add(new Point(y, x-1));
             colors.add(PATH_COLOR);
@@ -251,7 +251,7 @@ public class MazeLoader {
             }
             colors.set(curPos, BAD_PATH_COLOR);
         }
-        if(grid[y+1][x].getBackground() == OPEN_COLOR && !visited[y+1][x]){
+        if(grid[y+1][x].getBackground().equals(OPEN_COLOR) && !visited[y+1][x]){
             visited[y+1][x] = true;
             moves.add(new Point(y+1,x));
             colors.add(PATH_COLOR);
@@ -311,6 +311,9 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(iter >= moves.size()){
+                return;
+            }
             grid[(int)moves.get(iter).getX()][(int)moves.get(iter).getY()].setBackground(colors.get(iter));
             iter++;
         }
