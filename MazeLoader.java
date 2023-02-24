@@ -4,7 +4,7 @@
 // Last Modified    : 03/21/2018
 // Description      : This is the MazeLoader file for Math 271 where students
 //                    will implement the recursive routine to "solve" the maze.
-package mazesolver;
+//package mazesolver;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -51,6 +51,7 @@ public class MazeLoader {
     private Timer timer;
     private JFileChooser mazeFile;
     private String lastDirectory = null;
+    private File maze;
     
     private boolean[][] visited;
     private int iter = 0;
@@ -64,6 +65,7 @@ public class MazeLoader {
         // Intialize other "stuff"
         start = new Point();
         allowMazeUpdate = true;
+        mazeFile = new JFileChooser();
         timer = new Timer(100, new TimerListener());
         
         // Create the maze window
@@ -73,8 +75,8 @@ public class MazeLoader {
         // Need to define the layout - as a grid depending on the number
         // of grid squares to use. Open the file and read in the size.
         try {
-            
-            fileToRead = new Scanner(new File("maze.txt"));
+            maze = new File("maze.txt");
+            fileToRead = new Scanner(maze);
             ROW = fileToRead.nextInt();
             COL = fileToRead.nextInt();
         }
@@ -265,6 +267,78 @@ public class MazeLoader {
         return false;
     }
     
+    /**
+     * Method to reload the maze when a new file is selected
+     * @author Nikolas Leslie
+     */
+    public void reload(){
+        allowMazeUpdate = true;
+        window = new JFrame("Maze Program");
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        // Need to define the layout - as a grid depending on the number
+        // of grid squares to use. Open the file and read in the size.
+        try {
+            fileToRead = new Scanner(maze);
+            ROW = fileToRead.nextInt();
+            COL = fileToRead.nextInt();
+        }
+        catch(FileNotFoundException e) {
+            JOptionPane.showMessageDialog(window,"Default maze not found. " +
+                    "\nSelect a maze to solve from the menu," +
+                    "\nor rename maze to maze.txt", "Error", JOptionPane.ERROR_MESSAGE);
+            allowMazeUpdate = false;
+        }
+
+        if(allowMazeUpdate) {
+            // Now establish the Layout - appropriate to the grid size
+            window.setLayout(new GridLayout(ROW, COL));
+            grid= new JPanel[ROW][COL];
+            data = fileToRead.nextLine();
+            for(int i=0; i<ROW; i++) {
+                data = fileToRead.nextLine();
+                for(int j=0; j<COL; j++) {
+                    grid[i][j] = new JPanel();
+                    grid[i][j].setName("" + i + ":" + j);
+                    if(data.charAt(j) == '*') 
+                        grid[i][j].setBackground(WALL_COLOR);
+					// Do not add a mouse listener to the border square
+                    else if(i != 0 && j != 0 && i != COL-1 && j != ROW-1) {
+						grid[i][j].setBackground(OPEN_COLOR);
+						grid[i][j].addMouseListener(new MazeListener());
+                    }
+					else // This should be the exit(s) on the maze
+						grid[i][j].setBackground(OPEN_COLOR);
+					
+                    window.add(grid[i][j]);
+                }
+            }
+            fileToRead.close();
+            window.pack();
+        }
+
+        // Add the menu to the window
+        menuBar = new JMenuBar();
+        menu = new JMenu("Load Maze...");
+        loadMaze = new JMenuItem[2];
+        loadMaze[0] = new JMenuItem("Load New Maze from another file...");
+        loadMaze[0].addActionListener(new LoadMazeFromFile());
+        loadMaze[1] = new JMenuItem("Load New Maze from current maze...");
+        loadMaze[1].addActionListener(new ReloadCurrentMaze());
+        menu.add(loadMaze[0]);
+        menu.add(loadMaze[1]);
+        menuBar.add(menu);
+        window.setJMenuBar(menuBar);
+        
+        if(!allowMazeUpdate)
+            window.setSize(100,50);
+       
+        // Finally, show the maze
+        window.setResizable(false);
+        window.setLocationRelativeTo(null);
+        window.setVisible(true);
+    }
+    
     /** ReloadCurrentMaze class listens to menu clicks - simply
      *  wipes the current state of the maze.
      */
@@ -291,8 +365,13 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(window, "Feature not yet implemented",
-                    "Extra Credit #2", JOptionPane.WARNING_MESSAGE);
+            timer.stop();
+            iter = 0;
+            int result = mazeFile.showOpenDialog(window);
+            if(result == JFileChooser.APPROVE_OPTION){
+                maze = mazeFile.getSelectedFile();
+                reload();
+            }
         }
     } // end of LoadMazeFromFile class
     
