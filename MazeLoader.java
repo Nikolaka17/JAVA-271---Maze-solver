@@ -4,7 +4,7 @@
 // Last Modified    : 03/21/2018
 // Description      : This is the MazeLoader file for Math 271 where students
 //                    will implement the recursive routine to "solve" the maze.
-//package mazesolver;
+package mazesolver;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -56,7 +56,6 @@ public class MazeLoader {
     private int iter = 0;
     private ArrayList<Point> moves = new ArrayList<Point>();
     private ArrayList<Color> colors = new ArrayList<Color>();
-    private int curPos = 0;
     
     /** Default constructor - initializes all private values
      * 
@@ -184,13 +183,15 @@ public class MazeLoader {
         
     }
     
-    /** findPath is the recursive routine to find the solution through the maze
-     * 
-     * @param p - the current Point in the maze
-     * @return whether or not a solution has been found.
+    /**
+     * A non recursive method that sets up the variables for the recursive method
+     * @author Nikolas Leslie
+     * @param p The current Point in the maze
+     * @return A boolean representing if a solution is found
      */
     public boolean findPath(Point p)  {
         moves.clear();
+        colors.clear();
         visited = new boolean[ROW][COL];
         for(int i = 0; i < visited.length; i++){
             for(int j = 0; j < visited[i].length; j++){
@@ -206,59 +207,56 @@ public class MazeLoader {
         grid[(int)p.getX()][(int)p.getY()].setBackground(PATH_COLOR);
         moves.add(p);
         colors.add(PATH_COLOR);
-        curPos++;
 
-        if(findPathR((int)p.getY(), (int)p.getX(), 1)){
-
-            return true;
-        }
-        
-        return false;
+        return findPathR((int)p.getY(), (int)p.getX());
     }
 
-    public boolean findPathR(int x, int y, int count){
+    /**
+     * Recursive method to find the exit to a maze
+     * @author Nikolas Leslie
+     * @param x The current x position
+     * @param y The current y position
+     * @return A boolean representing if a solution was found
+     */
+    public boolean findPathR(int x, int y){
         if(x == 0 || x == COL - 1 || y == 0 || y == ROW - 1){
             return true;
         }
         if(grid[y][x + 1].getBackground().equals(OPEN_COLOR) && !visited[y][x + 1]){
-            curPos = moves.size();
             visited[y][x + 1] = true;
             moves.add(new Point(y, x + 1));
             colors.add(PATH_COLOR);
-            if(findPathR(x + 1, y, count + 1)){
+            if(findPathR(x + 1, y)){
                 return true;
             }
             moves.add(new Point(y, x + 1));
             colors.add(BAD_PATH_COLOR);
         }
         if(grid[y - 1][x].getBackground().equals(OPEN_COLOR) && !visited[y - 1][x]){
-            curPos = moves.size();
             visited[y-1][x] = true;
             moves.add(new Point(y - 1, x));
             colors.add(PATH_COLOR);
-            if(findPathR(x, y-1, count+1)){
+            if(findPathR(x, y-1)){
                 return true;
             }
             moves.add(new Point(y - 1, x));
             colors.add(BAD_PATH_COLOR);
         }
         if(grid[y][x-1].getBackground().equals(OPEN_COLOR) && !visited[y][x-1]){
-            curPos = moves.size();
             visited[y][x-1] = true;
             moves.add(new Point(y, x-1));
             colors.add(PATH_COLOR);
-            if(findPathR(x-1, y, count+1)){
+            if(findPathR(x-1, y)){
                 return true;
             }
             moves.add(new Point(y, x-1));
             colors.add(BAD_PATH_COLOR);
         }
         if(grid[y+1][x].getBackground().equals(OPEN_COLOR) && !visited[y+1][x]){
-            curPos = moves.size();
             visited[y+1][x] = true;
             moves.add(new Point(y+1,x));
             colors.add(PATH_COLOR);
-            if(findPathR(x, y+1, count+1)){
+            if(findPathR(x, y+1)){
                 return true;
             }
             moves.add(new Point(y+1,x));
