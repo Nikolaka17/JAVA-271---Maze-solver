@@ -273,7 +273,11 @@ public class MazeLoader {
      */
     public void reload(){
         allowMazeUpdate = true;
-        window = new JFrame("Maze Program");
+        for(int i = 0; i < grid.length; i++){
+            for(int j = 0; j < grid[i].length; j++){
+                window.remove(grid[i][j]);
+            }
+        }
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         // Need to define the layout - as a grid depending on the number
