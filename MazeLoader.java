@@ -272,14 +272,15 @@ public class MazeLoader {
      * @author Nikolas Leslie
      */
     public void reload(){
-        allowMazeUpdate = true;
-        for(int i = 0; i < grid.length; i++){
-            for(int j = 0; j < grid[i].length; j++){
-                window.remove(grid[i][j]);
-            }
-        }
+        if(allowMazeUpdate){
+			for(int i = 0; i < grid.length; i++){
+				for(int j = 0; j < grid[i].length; j++){
+					window.remove(grid[i][j]);
+				}
+			}
+		}
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+        allowMazeUpdate = true;
         // Need to define the layout - as a grid depending on the number
         // of grid squares to use. Open the file and read in the size.
         try {
