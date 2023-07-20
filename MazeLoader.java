@@ -4,7 +4,6 @@
 // Last Modified    : 03/21/2018
 // Description      : This is the MazeLoader file for Math 271 where students
 //                    will implement the recursive routine to "solve" the maze.
-//package mazesolver;
 
 import java.awt.Color;
 import java.awt.GridLayout;
@@ -16,6 +15,8 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.PriorityQueue;
+import java.util.Comparator;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -51,12 +52,11 @@ public class MazeLoader {
     private Timer timer;
     private JFileChooser mazeFile;
     private String lastDirectory = null;
-    private File maze;
-    
-    private boolean[][] visited;
-    private int iter = 0;
-    private ArrayList<Point> moves = new ArrayList<Point>();
-    private ArrayList<Color> colors = new ArrayList<Color>();
+    private Point exit = null;
+    private Space finalNode;
+    private ArrayList<Point> path;
+    private ArrayList<Point> full;
+    private int iter;
     
     /** Default constructor - initializes all private values
      * 
@@ -65,7 +65,6 @@ public class MazeLoader {
         // Intialize other "stuff"
         start = new Point();
         allowMazeUpdate = true;
-        mazeFile = new JFileChooser();
         timer = new Timer(100, new TimerListener());
         
         // Create the maze window
@@ -75,8 +74,8 @@ public class MazeLoader {
         // Need to define the layout - as a grid depending on the number
         // of grid squares to use. Open the file and read in the size.
         try {
-            maze = new File("maze.txt");
-            fileToRead = new Scanner(maze);
+            
+            fileToRead = new Scanner(new File("C:/Users/Nikolas/Documents/code/Math 271/maze.txt"));
             ROW = fileToRead.nextInt();
             COL = fileToRead.nextInt();
         }
@@ -107,6 +106,9 @@ public class MazeLoader {
 					else // This should be the exit(s) on the maze
 						grid[i][j].setBackground(OPEN_COLOR);
 					
+                    if((i == 0 || j == 0 || i == ROW - 1 || j == COL - 1) && grid[i][j].getBackground().equals(OPEN_COLOR)){
+                        exit = new Point(i, j);
+                    }
                     window.add(grid[i][j]);
                 }
             }
@@ -152,9 +154,7 @@ public class MazeLoader {
          */
         @Override
         public void mousePressed(MouseEvent e) {
-            timer.stop();
-            iter = 0;
-            if(!((JPanel)e.getSource()).getBackground().equals(WALL_COLOR) &&
+            if(((JPanel)e.getSource()).getBackground().equals(OPEN_COLOR) &&
                     !timer.isRunning()) {
                 data = ((JPanel)e.getSource()).getName();
                 start.x = Integer.parseInt(data.substring(0,data.indexOf(":")));
@@ -164,10 +164,16 @@ public class MazeLoader {
                 if(!findPath(start))
                     JOptionPane.showMessageDialog(window,"Cannot exit maze.");
                 else{
+                    JOptionPane.showMessageDialog(window, "Maze Exited!");
+                    path = new ArrayList<Point>();
+                    Space cur = finalNode;
+                    while(cur != null){
+                        path.add(cur.getPos());
+                        cur = cur.getParent();
+                    }
+                    iter = 0;
                     timer.start();
-                    //JOptionPane.showMessageDialog(window, "Maze Exited!");
                 }
-                    
             }
         }
 
@@ -185,163 +191,73 @@ public class MazeLoader {
         
     }
     
-    /**
-     * A non recursive method that sets up the variables for the recursive method
-     * @author Nikolas Leslie
-     * @param p The current Point in the maze
-     * @return A boolean representing if a solution is found
+    /** findPath is the recursive routine to find the solution through the maze
+     * 
+     * @param p - the current Point in the maze
+     * @return whether or not a solution has been found.
      */
     public boolean findPath(Point p)  {
-        moves.clear();
-        colors.clear();
-        visited = new boolean[ROW][COL];
-        for(int i = 0; i < visited.length; i++){
-            for(int j = 0; j < visited[i].length; j++){
-                visited[i][j] = false;
-                if(grid[i][j].getBackground() == PATH_COLOR || grid[i][j].getBackground() == BAD_PATH_COLOR){
-                    grid[i][j].setBackground(OPEN_COLOR);
+        full = new ArrayList<Point>();
+        PriorityQueue<Space> open = new PriorityQueue<Space>(new Comparator<Space>(){
+            @Override
+            public int compare(Space a, Space b){
+                return a.cost() - b.cost();
+            }
+        });
+        ArrayList<Space> closed = new ArrayList<Space>();
+        Space[][] nodes = new Space[ROW][COL];
+        for(int i = 0; i < ROW; i++){
+            for(int j = 0; j < COL; j++){
+                nodes[i][j] = new Space(new Point(i, j), grid[i][j].getBackground().equals(WALL_COLOR));
+            }
+        }
+        open.add(nodes[start.x][start.y]);
+        while(!open.isEmpty()){
+            Space cur = open.poll();
+            full.add(cur.getPos());
+            closed.add(cur);
+            //grid[cur.getPos().x][cur.getPos().y].setBackground(BAD_PATH_COLOR);
+            if(cur.getPos().equals(exit)){
+                finalNode = cur;
+                return true;
+            }
+
+            ArrayList<Space> neighbors = new ArrayList<Space>();
+            for(int i = -1; i <= 1; i++){
+                for(int j = -1; j <= 1; j++){
+                    if((i != 0 && j != 0) || i == j){
+                        continue;
+                    }
+                    if(valid(cur.getPos().x + i, cur.getPos().y + j)){
+                        neighbors.add(nodes[cur.getPos().x + i][cur.getPos().y + j]);
+                    }
                 }
-                
             }
-        }
-        
-        visited[(int)p.getX()][(int)p.getY()] = true;
-        grid[(int)p.getX()][(int)p.getY()].setBackground(PATH_COLOR);
-        moves.add(p);
-        colors.add(PATH_COLOR);
 
-        return findPathR((int)p.getY(), (int)p.getX());
-    }
-
-    /**
-     * Recursive method to find the exit to a maze
-     * @author Nikolas Leslie
-     * @param x The current x position
-     * @param y The current y position
-     * @return A boolean representing if a solution was found
-     */
-    public boolean findPathR(int x, int y){
-        if(x == 0 || x == COL - 1 || y == 0 || y == ROW - 1){
-            return true;
-        }
-        if(grid[y][x + 1].getBackground().equals(OPEN_COLOR) && !visited[y][x + 1]){
-            visited[y][x + 1] = true;
-            moves.add(new Point(y, x + 1));
-            colors.add(PATH_COLOR);
-            if(findPathR(x + 1, y)){
-                return true;
+            for(Space neighbor: neighbors){
+                if(neighbor.isWall() || closed.contains(neighbor)){
+                    continue;
+                }
+                int tempCost = cur.getGCost() + distance(cur.getPos(), neighbor.getPos());
+                if(tempCost < cur.getGCost() || !open.contains(neighbor)){
+                    neighbor.setGCost(tempCost);
+                    neighbor.setHCost(distance(neighbor.getPos(), exit));
+                    neighbor.setParent(cur);
+                    if(!open.contains(neighbor)){
+                        open.add(neighbor);
+                    }
+                }
             }
-            moves.add(new Point(y, x + 1));
-            colors.add(BAD_PATH_COLOR);
-        }
-        if(grid[y - 1][x].getBackground().equals(OPEN_COLOR) && !visited[y - 1][x]){
-            visited[y-1][x] = true;
-            moves.add(new Point(y - 1, x));
-            colors.add(PATH_COLOR);
-            if(findPathR(x, y-1)){
-                return true;
-            }
-            moves.add(new Point(y - 1, x));
-            colors.add(BAD_PATH_COLOR);
-        }
-        if(grid[y][x-1].getBackground().equals(OPEN_COLOR) && !visited[y][x-1]){
-            visited[y][x-1] = true;
-            moves.add(new Point(y, x-1));
-            colors.add(PATH_COLOR);
-            if(findPathR(x-1, y)){
-                return true;
-            }
-            moves.add(new Point(y, x-1));
-            colors.add(BAD_PATH_COLOR);
-        }
-        if(grid[y+1][x].getBackground().equals(OPEN_COLOR) && !visited[y+1][x]){
-            visited[y+1][x] = true;
-            moves.add(new Point(y+1,x));
-            colors.add(PATH_COLOR);
-            if(findPathR(x, y+1)){
-                return true;
-            }
-            moves.add(new Point(y+1,x));
-            colors.add(BAD_PATH_COLOR);
         }
         return false;
     }
-    
-    /**
-     * Method to reload the maze when a new file is selected
-     * @author Nikolas Leslie
-     */
-    public void reload(){
-        if(allowMazeUpdate){
-			for(int i = 0; i < grid.length; i++){
-				for(int j = 0; j < grid[i].length; j++){
-					window.remove(grid[i][j]);
-				}
-			}
-		}
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        allowMazeUpdate = true;
-        // Need to define the layout - as a grid depending on the number
-        // of grid squares to use. Open the file and read in the size.
-        try {
-            fileToRead = new Scanner(maze);
-            ROW = fileToRead.nextInt();
-            COL = fileToRead.nextInt();
-        }
-        catch(FileNotFoundException e) {
-            JOptionPane.showMessageDialog(window,"Default maze not found. " +
-                    "\nSelect a maze to solve from the menu," +
-                    "\nor rename maze to maze.txt", "Error", JOptionPane.ERROR_MESSAGE);
-            allowMazeUpdate = false;
-        }
 
-        if(allowMazeUpdate) {
-            // Now establish the Layout - appropriate to the grid size
-            window.setLayout(new GridLayout(ROW, COL));
-            grid= new JPanel[ROW][COL];
-            data = fileToRead.nextLine();
-            for(int i=0; i<ROW; i++) {
-                data = fileToRead.nextLine();
-                for(int j=0; j<COL; j++) {
-                    grid[i][j] = new JPanel();
-                    grid[i][j].setName("" + i + ":" + j);
-                    if(data.charAt(j) == '*') 
-                        grid[i][j].setBackground(WALL_COLOR);
-					// Do not add a mouse listener to the border square
-                    else if(i != 0 && j != 0 && i != COL-1 && j != ROW-1) {
-						grid[i][j].setBackground(OPEN_COLOR);
-						grid[i][j].addMouseListener(new MazeListener());
-                    }
-					else // This should be the exit(s) on the maze
-						grid[i][j].setBackground(OPEN_COLOR);
-					
-                    window.add(grid[i][j]);
-                }
-            }
-            fileToRead.close();
-            window.pack();
-        }
+    private int distance(Point from, Point to){
+        return (int)(Math.abs(from.getX() - to.getX()) + Math.abs(from.getY() - to.getY()));
+    }
 
-        // Add the menu to the window
-        menuBar = new JMenuBar();
-        menu = new JMenu("Load Maze...");
-        loadMaze = new JMenuItem[2];
-        loadMaze[0] = new JMenuItem("Load New Maze from another file...");
-        loadMaze[0].addActionListener(new LoadMazeFromFile());
-        loadMaze[1] = new JMenuItem("Load New Maze from current maze...");
-        loadMaze[1].addActionListener(new ReloadCurrentMaze());
-        menu.add(loadMaze[0]);
-        menu.add(loadMaze[1]);
-        menuBar.add(menu);
-        window.setJMenuBar(menuBar);
-        
-        if(!allowMazeUpdate)
-            window.setSize(100,50);
-       
-        // Finally, show the maze
-        window.setResizable(false);
-        window.setLocationRelativeTo(null);
-        window.setVisible(true);
+    private boolean valid(int row, int column){
+        return row >= 0 && column >= 0 && row < ROW && column < COL;
     }
     
     /** ReloadCurrentMaze class listens to menu clicks - simply
@@ -351,8 +267,6 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            timer.stop();
-            iter = 0;
             for(int i=0; i<ROW; i++)
                 for(int j=0; j<COL; j++)
                     if(grid[i][j].getBackground().equals(PATH_COLOR) ||
@@ -370,13 +284,8 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            timer.stop();
-            iter = 0;
-            int result = mazeFile.showOpenDialog(window);
-            if(result == JFileChooser.APPROVE_OPTION){
-                maze = mazeFile.getSelectedFile();
-                reload();
-            }
+            JOptionPane.showMessageDialog(window, "Feature not yet implemented",
+                    "Extra Credit #2", JOptionPane.WARNING_MESSAGE);
         }
     } // end of LoadMazeFromFile class
     
@@ -396,10 +305,11 @@ public class MazeLoader {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if(iter >= moves.size()){
+            if(iter >= full.size()){
+                timer.stop();
                 return;
             }
-            grid[(int)moves.get(iter).getX()][(int)moves.get(iter).getY()].setBackground(colors.get(iter));
+            grid[full.get(iter).x][full.get(iter).y].setBackground((path.contains(full.get(iter)))?PATH_COLOR:BAD_PATH_COLOR);
             iter++;
         }
     }
